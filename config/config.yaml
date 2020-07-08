@@ -14,3 +14,6 @@ weight_decay: 1.0e-6
 root: "../data"
 # save model every checkpoint epochs
 checkpoint: 2
+# proportion of validation data
+valsize: 0.2
+
