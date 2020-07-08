@@ -1,7 +1,7 @@
 # train options
 seed: 2020 # sacred handles automatic seeding when passed in the config
-batch_size: 4
-workers: 2
+batch_size: 16
+workers: 0
 epochs: 10
 dataset: "CIFAR10"
 
@@ -16,4 +16,8 @@ root: "../data"
 checkpoint: 2
 # proportion of validation data
 valsize: 0.2
+
+# parameters for testing model
+experiment_id: 1
+checkpoin_to_test: 10
 

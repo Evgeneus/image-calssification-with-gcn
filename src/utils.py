@@ -9,3 +9,10 @@ def save_model(args, model):
         torch.save(model.module.state_dict(), out)
     else:
         torch.save(model.state_dict(), out)
+
+
+def load_model(args, model):
+    model_path = "../logs/{}/pretrained/checkpoint_{}.tar".format(args.experiment_id, args.checkpoin_to_test)
+    model.load_state_dict(torch.load(model_path))
+
+    return model
