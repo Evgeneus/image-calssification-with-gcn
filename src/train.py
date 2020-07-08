@@ -3,7 +3,9 @@ import torchvision
 import torchvision.transforms as transforms
 import torch.nn as nn
 import torch.optim as optim
+from torch.utils.tensorboard import SummaryWriter
 import argparse
+import os
 
 from src.model import Net
 from src.experiment_setup import ex
@@ -48,11 +50,17 @@ def main(_run):
     steps_per_epoch = len(train_loader)
     _run.info["steps_per_epoch"] = steps_per_epoch
     args.out_dir = "{}/{}/pretrained/".format(ex.observers[0].basedir, _run._id)
-    # Train the network
-    for epoch in range(args.epochs):  # loop over the dataset multiple times
-        args.current_epoch = epoch
+    os.makedirs(args.out_dir)
+    args.tensorboard_dir = "{}/{}/tensorboard/".format(ex.observers[0].basedir, _run._id)
+    os.makedirs(args.tensorboard_dir)
+    writer = SummaryWriter(log_dir=args.tensorboard_dir)
 
-        running_loss = 0.0
+    # Train the network
+    for epoch in range(1, args.epochs + 1):  # loop over the dataset multiple times
+        args.current_epoch = epoch
+        loss_epoch = 0.
+
+        running_loss = 0.
         for i, data in enumerate(train_loader, 0):
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
@@ -68,14 +76,19 @@ def main(_run):
 
             # print statistics
             running_loss += loss.item()
+            loss_epoch += loss.item()
             if i % 2000 == 1999:  # print every 2000 mini-batches
                 print('[%d, %5d] loss: %.3f' %
-                      (epoch + 1, i + 1, running_loss / 2000))
+                      (epoch, i + 1, running_loss / 2000))
                 step = epoch * steps_per_epoch + i + 1
                 _run.log_scalar("training.loss", running_loss / 2000, step)
-                running_loss = 0.0
+                writer.add_scalar("Loss/train", running_loss / 2000, step)
+                running_loss = 0.
 
         # Save model
-        save_model(args, model)
+        if epoch % args.checkpoint == 0:
+            save_model(args, model)
+        writer.add_scalar("Learning_rate", args.lr, epoch)
+        writer.add_scalar("Loss Epoch/train", loss_epoch / steps_per_epoch, epoch)
 
     print('Finished Training')
