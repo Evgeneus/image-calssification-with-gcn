@@ -7,6 +7,7 @@ import argparse
 
 from src.model import Net
 from src.experiment_setup import ex
+from src.utils import save_model
 
 
 @ex.automain
@@ -46,8 +47,10 @@ def main(_run):
 
     steps_per_epoch = len(train_loader)
     _run.info["steps_per_epoch"] = steps_per_epoch
+    args.out_dir = "{}/{}/pretrained/".format(ex.observers[0].basedir, _run._id)
     # Train the network
     for epoch in range(args.epochs):  # loop over the dataset multiple times
+        args.current_epoch = epoch
 
         running_loss = 0.0
         for i, data in enumerate(train_loader, 0):
@@ -71,5 +74,8 @@ def main(_run):
                 step = epoch * steps_per_epoch + i + 1
                 _run.log_scalar("training.loss", running_loss / 2000, step)
                 running_loss = 0.0
+
+        # Save model
+        save_model(args, model)
 
     print('Finished Training')
