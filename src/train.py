@@ -75,6 +75,9 @@ def load_model(args):
     elif args.model == "GATConvMLP":
         from model import GATConvMLP
         model = GATConvMLP()
+    elif args.model == "GConvMLP":
+        from model import GConvMLP
+        model = GConvMLP()
     else:
         raise NotImplementedError
 
@@ -135,16 +138,16 @@ def main(_run):
             # print statistics
             running_loss += loss.item()
             train_loss_epoch += loss.item()
-            if i % 20 == 0:  # print every 20 mini-batches
+            k = 200
+            if i % k == 0:  # print every 20 mini-batches
                 print('[%d, %5d] loss: %.3f' %
-                      (epoch, i + 1, running_loss / 20))
+                      (epoch, i + 1, running_loss / k))
                 step = epoch * steps_per_epoch + i + 1
-                _run.log_scalar("training.loss.step", running_loss / 20, step)
-                writer.add_scalar("Loss Steps/train", running_loss / 20, step)
+                _run.log_scalar("training.loss.step", running_loss / k, step)
+                writer.add_scalar("Loss Steps/train", running_loss / k, step)
                 running_loss = 0.
 
         # Save model
-        print(epoch)
         if epoch % args.checkpoint == 0:
             save_model(args, model)
         # compute validation loss
@@ -154,5 +157,9 @@ def main(_run):
         writer.add_scalar("Learning_rate", args.lr, epoch)
         writer.add_scalars("Loss vs Epoch", {"train_loss": train_loss_epoch / steps_per_epoch,
                                              "val_loss": val_loss_epoch}, epoch)
+
+        print("epoch: {}".format(epoch))
+        print("val.loss.epoch", val_loss_epoch)
+        print("train.loss.epoch", train_loss_epoch / steps_per_epoch)
 
     print('Finished Training')

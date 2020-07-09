@@ -7,7 +7,7 @@ from sacred.observers import FileStorageObserver
 import torch
 
 
-ex = Experiment("SimpleCls")
+ex = Experiment("Cls")
 
 
 @ex.config
