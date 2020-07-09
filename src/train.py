@@ -8,7 +8,7 @@ import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.model_selection import train_test_split
 
-from src.model import Net
+from src.model import MLP
 from src.experiment_setup import ex
 from src.utils import save_model
 
@@ -79,7 +79,7 @@ def main(_run):
     train_loader, val_loader = load_data(args)
 
     # Define Network
-    model = Net().to(args.device)
+    model = MLP().to(args.device)
     print(model)
 
     # Define a Loss function and optimizer

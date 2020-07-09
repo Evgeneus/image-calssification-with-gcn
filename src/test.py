@@ -6,7 +6,7 @@ import torchvision.transforms as transforms
 
 from src.experiment_setup import ex
 from src.utils import load_model
-from src.model import Net
+from src.model import MLP
 
 
 def load_data(args):
@@ -42,7 +42,7 @@ def main(_run):
     ex.info["test_size"] = len(test_loader.dataset)
 
     # Load model
-    model = load_model(args, Net())
+    model = load_model(args, MLP())
     model = model.to(args.device)
     model.eval()
 
