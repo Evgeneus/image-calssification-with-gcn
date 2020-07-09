@@ -4,6 +4,7 @@ batch_size: 256
 workers: 4
 epochs: 10
 dataset: "CIFAR10"
+model: "MLP"  #or "GATConvMLP"
 
 # loss options
 lr: 1.0e-3

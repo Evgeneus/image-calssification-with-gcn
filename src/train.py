@@ -8,9 +8,8 @@ import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 from sklearn.model_selection import train_test_split
 
-from src.model import MLP
-from src.experiment_setup import ex
-from src.utils import save_model
+from experiment_setup import ex
+from utils import save_model
 
 
 def compute_val(model, val_loader, criterion, args):
@@ -69,6 +68,21 @@ def load_data(args):
     return train_loader, val_loader
 
 
+def load_model(args):
+    if args.model == "MLP":
+        from model import MLP
+        model = MLP()
+    elif args.model == "GATConvMLP":
+        from model import GATConvMLP
+        model = GATConvMLP()
+    else:
+        raise NotImplementedError
+
+    model = model.to(args.device)
+
+    return model
+
+
 @ex.automain
 def main(_run):
     args = argparse.Namespace(**_run.config)
@@ -79,7 +93,7 @@ def main(_run):
     train_loader, val_loader = load_data(args)
 
     # Define Network
-    model = MLP().to(args.device)
+    model = load_model(args)
     print(model)
 
     # Define a Loss function and optimizer
