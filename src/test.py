@@ -35,12 +35,15 @@ def load_data(args):
 def main(_run):
     args = argparse.Namespace(**_run.config)
 
+    args.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
     # Load test data
     test_loader = load_data(args)
     ex.info["test_size"] = len(test_loader.dataset)
 
     # Load model
     model = load_model(args, Net())
+    model = model.to(args.device)
     model.eval()
 
     # Define a Loss function and optimizer
@@ -52,7 +55,7 @@ def main(_run):
     with torch.no_grad():
         for _, data in enumerate(test_loader, 0):
             # get the inputs; data is a list of [inputs, labels]
-            inputs, labels = data
+            inputs, labels = data[0].to(args.device), data[1].to(args.device)
 
             # predict labels
             outputs = model(inputs)

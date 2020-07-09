@@ -13,12 +13,12 @@ from src.experiment_setup import ex
 from src.utils import save_model
 
 
-def compute_val(model, val_loader, criterion):
+def compute_val(model, val_loader, criterion, args):
     model.eval()
     val_loss = 0.
     for _, data in enumerate(val_loader, 0):
         # get the inputs; data is a list of [inputs, labels]
-        inputs, labels = data
+        inputs, labels = data[0].to(args.device), data[1].to(args.device)
 
         # forward
         outputs = model(inputs)
@@ -73,11 +73,13 @@ def load_data(args):
 def main(_run):
     args = argparse.Namespace(**_run.config)
 
+    args.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
     # Load data
     train_loader, val_loader = load_data(args)
 
     # Define Network
-    model = Net()
+    model = Net().to(args.device)
     print(model)
 
     # Define a Loss function and optimizer
@@ -105,7 +107,7 @@ def main(_run):
         running_loss = 0.
         for i, data in enumerate(train_loader, 0):
             # get the inputs; data is a list of [inputs, labels]
-            inputs, labels = data
+            inputs, labels = data[0].to(args.device), data[1].to(args.device)
 
             # zero the parameter gradients
             optimizer.zero_grad()
@@ -119,19 +121,20 @@ def main(_run):
             # print statistics
             running_loss += loss.item()
             train_loss_epoch += loss.item()
-            if i % 2000 == 1999:  # print every 2000 mini-batches
+            if i % 20 == 0:  # print every 20 mini-batches
                 print('[%d, %5d] loss: %.3f' %
-                      (epoch, i + 1, running_loss / 2000))
+                      (epoch, i + 1, running_loss / 20))
                 step = epoch * steps_per_epoch + i + 1
-                _run.log_scalar("training.loss.step", running_loss / 2000, step)
-                writer.add_scalar("Loss Steps/train", running_loss / 2000, step)
+                _run.log_scalar("training.loss.step", running_loss / 20, step)
+                writer.add_scalar("Loss Steps/train", running_loss / 20, step)
                 running_loss = 0.
 
         # Save model
+        print(epoch)
         if epoch % args.checkpoint == 0:
             save_model(args, model)
         # compute validation loss
-        val_loss_epoch = compute_val(model, val_loader, criterion)
+        val_loss_epoch = compute_val(model, val_loader, criterion, args)
         _run.log_scalar("val.loss.epoch", val_loss_epoch)
         _run.log_scalar("train.loss.epoch", train_loss_epoch / steps_per_epoch)
         writer.add_scalar("Learning_rate", args.lr, epoch)
