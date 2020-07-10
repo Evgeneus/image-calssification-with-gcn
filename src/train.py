@@ -31,11 +31,18 @@ def compute_val(model, val_loader, criterion, args):
 
 def load_data(args):
     if args.dataset == "CIFAR10":
-        transform = transforms.Compose(
-            [transforms.ToTensor(),
-             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+        transform_train = transforms.Compose([
+            transforms.RandomCrop(32, padding=4),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ])
+        # transform_test = transforms.Compose([
+        #     transforms.ToTensor(),
+        #     transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        # ])
         train_val = torchvision.datasets.CIFAR10(root=args.root, train=True,
-                                                 download=True, transform=transform)
+                                                 download=True, transform=transform_train)
     else:
         raise NotImplementedError
 
@@ -48,6 +55,7 @@ def load_data(args):
 
     train_set = torch.utils.data.Subset(train_val, train_idx)
     val_set = torch.utils.data.Subset(train_val, val_idx)
+
     train_loader = torch.utils.data.DataLoader(
         train_set,
         batch_size=args.batch_size,
