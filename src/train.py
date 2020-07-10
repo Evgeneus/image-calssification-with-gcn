@@ -69,24 +69,15 @@ def load_data(args):
 
 
 def load_model(args):
-    if args.model == "MLP":
-        from model import MLP
-        model = MLP()
-    elif args.model == "GATConvMLP":
-        from model import GATConvMLP
-        model = GATConvMLP()
-    elif args.model == "GConvMLP":
-        from model import GConvMLP
-        model = GConvMLP()
-    elif args.model == "ResNet":
+    if args.model == "ResNet":
         from model import ResNet
         model = ResNet()
     elif args.model == "ResNetGCN":
         from model import ResNetGCN
-        model = ResNetGCN()
+        model = ResNetGCN(args.graph_type)
     elif args.model == "ResNetGATCN":
         from model import ResNetGATCN
-        model = ResNetGATCN()
+        model = ResNetGATCN(args.graph_type)
     else:
         raise NotImplementedError
 
