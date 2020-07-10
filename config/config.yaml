@@ -2,9 +2,9 @@
 seed: 2020 # sacred handles automatic seeding when passed in the config
 batch_size: 32
 workers: 4
-epochs: 100
+epochs: 50
 dataset: "CIFAR10"
-model: "MLP"  # or "GATConvMLP" or "GConvMLP"
+model: "ResNetGATCN"  # "ResNet" or "ResNetGCN" or "ResNetGATCN"
 
 # loss options
 lr: 1.0e-3
@@ -14,7 +14,7 @@ weight_decay: 1.0e-6
 # data folder
 root: "../data"
 # save model every checkpoint epochs
-checkpoint: 5
+checkpoint: 2
 # proportion of validation data
 valsize: 0.2
 

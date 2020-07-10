@@ -78,6 +78,15 @@ def load_model(args):
     elif args.model == "GConvMLP":
         from model import GConvMLP
         model = GConvMLP()
+    elif args.model == "ResNet":
+        from model import ResNet
+        model = ResNet()
+    elif args.model == "ResNetGCN":
+        from model import ResNetGCN
+        model = ResNetGCN()
+    elif args.model == "ResNetGATCN":
+        from model import ResNetGATCN
+        model = ResNetGATCN()
     else:
         raise NotImplementedError
 
@@ -138,7 +147,7 @@ def main(_run):
             # print statistics
             running_loss += loss.item()
             train_loss_epoch += loss.item()
-            k = 200
+            k = 20
             if i % k == 0:  # print every 20 mini-batches
                 print('[%d, %5d] loss: %.3f' %
                       (epoch, i + 1, running_loss / k))
