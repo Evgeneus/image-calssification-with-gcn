@@ -6,14 +6,13 @@ import torchvision.transforms as transforms
 
 from src.experiment_setup import ex
 from src.utils import load_model
-from src.model import MLP
 
 
 def load_data(args):
     if args.dataset == "CIFAR10":
         transform = transforms.Compose(
             [transforms.ToTensor(),
-             transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
         test_set = torchvision.datasets.CIFAR10(root=args.root, train=False,
                                                  download=True, transform=transform)
     else:
@@ -31,6 +30,25 @@ def load_data(args):
     return test_loader
 
 
+def load_model_bold(args):
+    if args.model == "ResNet":
+        from model import ResNet
+        model = ResNet()
+    elif args.model == "ResNetGCN":
+        print(args.model)
+        from model import ResNetGCN
+        model = ResNetGCN(args.graph_type)
+    elif args.model == "ResNetGATCN":
+        from model import ResNetGATCN
+        model = ResNetGATCN(args.graph_type)
+    else:
+        raise NotImplementedError
+
+    model = model.to(args.device)
+
+    return model
+
+
 @ex.automain
 def main(_run):
     args = argparse.Namespace(**_run.config)
@@ -42,7 +60,8 @@ def main(_run):
     ex.info["test_size"] = len(test_loader.dataset)
 
     # Load model
-    model = load_model(args, MLP())
+    model_bold = load_model_bold(args)
+    model = load_model(args, model_bold)
     model = model.to(args.device)
     model.eval()
 
