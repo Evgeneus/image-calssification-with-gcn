@@ -7,28 +7,13 @@ from models.helper import GraphCreator
 from models.graph_conv import GraphConv
 
 
-class ResNet(nn.Module):
-
-    def __init__(self):
-        super(ResNet, self).__init__()
-        embed_dim = 100
-        self.encoder = ResNet18(num_classes=embed_dim)
-        self.fc = nn.Linear(embed_dim, 10, bias=True)
-
-    def forward(self, x):
-        x = self.encoder(x)
-        x = self.fc(x)
-
-        return x
-
-
 class ResNetGCN(nn.Module, GraphCreator):
 
     def __init__(self, graph_type):
         super(ResNetGCN, self).__init__()
-        embed_dim = 100
+        embed_dim = 512  # output from ResNet18
         self.graph_type = graph_type
-        self.encoder = ResNet18(num_classes=embed_dim)
+        self.encoder = ResNet18(output_layer=False)
         self.graph_conv = GraphConv(embed_dim, embed_dim, bias=True)
         self.fc = nn.Linear(embed_dim, 10, bias=True)
 
@@ -47,9 +32,9 @@ class ResNetGATCN(nn.Module, GraphCreator):
 
     def __init__(self, graph_type):
         super(ResNetGATCN, self).__init__()
-        embed_dim = 100
+        embed_dim = 512  # output from ResNet18
         self.graph_type = graph_type
-        self.encoder = ResNet18(num_classes=embed_dim)
+        self.encoder = ResNet18(output_layer=False)
         self.gat_conv = GATConv(embed_dim, embed_dim, 1)
         self.fc = nn.Linear(embed_dim, 10, bias=True)
 

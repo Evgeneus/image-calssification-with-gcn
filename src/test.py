@@ -32,8 +32,8 @@ def load_data(args):
 
 def load_model_bold(args):
     if args.model == "ResNet":
-        from models.model import ResNet
-        model = ResNet()
+        from models.resnet import ResNet18
+        model = ResNet18(output_layer=True, num_classes=10)
     elif args.model == "ResNetGCN":
         from models.model import ResNetGCN
         model = ResNetGCN(args.graph_type)

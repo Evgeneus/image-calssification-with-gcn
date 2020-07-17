@@ -71,7 +71,7 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10):
+    def __init__(self, block, num_blocks, output_layer=True, num_classes=10):
         super(ResNet, self).__init__()
         self.in_planes = 64
 
@@ -82,10 +82,13 @@ class ResNet(nn.Module):
         self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
-        self.linear = nn.Linear(512*block.expansion, num_classes)
+
+        self.output_layer = output_layer
+        if self.output_layer is True:
+            self.linear = nn.Linear(512 * block.expansion, num_classes)
 
     def _make_layer(self, block, planes, num_blocks, stride):
-        strides = [stride] + [1]*(num_blocks-1)
+        strides = [stride] + [1] * (num_blocks - 1)
         layers = []
         for stride in strides:
             layers.append(block(self.in_planes, planes, stride))
@@ -100,11 +103,10 @@ class ResNet(nn.Module):
         out = self.layer4(out)
         out = F.avg_pool2d(out, 4)
         out = out.view(out.size(0), -1)
-        out = self.linear(out)
+        if self.output_layer is True:
+            out = self.linear(out)
         return out
 
 
-def ResNet18(num_classes):
-    return ResNet(block=BasicBlock, num_blocks=[2, 2, 2, 2], num_classes=num_classes)
-
-
+def ResNet18(output_layer=True, num_classes=10):
+    return ResNet(block=BasicBlock, num_blocks=[2, 2, 2, 2], output_layer=output_layer, num_classes=num_classes)
