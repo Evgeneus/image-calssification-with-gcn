@@ -15,16 +15,27 @@ from utils import save_model
 def compute_val(model, val_loader, criterion, args):
     model.eval()
     val_loss = 0.
-    for _, data in enumerate(val_loader, 0):
-        # get the inputs; data is a list of [inputs, labels]
-        inputs, labels = data[0].to(args.device), data[1].to(args.device)
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for _, data in enumerate(val_loader, 0):
+            # get the inputs; data is a list of [inputs, labels]
+            inputs, labels = data[0].to(args.device), data[1].to(args.device)
 
-        # forward
-        outputs = model(inputs)
-        loss = criterion(outputs, labels)
+            # forward
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
 
-        # print statistics
-        val_loss += loss.item()
+            # print statistics
+            val_loss += loss.item()
+
+            _, predicted = outputs.max(1)
+            total += labels.size(0)
+            correct += predicted.eq(labels).sum().item()
+
+    acc = 100. * correct / total
+    print("Val acc: {}".format(acc))
+    print("Val loss: {}".format(val_loss / len(val_loader)))
 
     return val_loss / len(val_loader)
 
@@ -78,13 +89,13 @@ def load_data(args):
 
 def load_model(args):
     if args.model == "ResNet":
-        from model import ResNet
-        model = ResNet()
+        from models.model import ResNet18
+        model = ResNet18(num_classes=10)
     elif args.model == "ResNetGCN":
-        from model import ResNetGCN
+        from models.model import ResNetGCN
         model = ResNetGCN(args.graph_type)
     elif args.model == "ResNetGATCN":
-        from model import ResNetGATCN
+        from models.model import ResNetGATCN
         model = ResNetGATCN(args.graph_type)
     else:
         raise NotImplementedError

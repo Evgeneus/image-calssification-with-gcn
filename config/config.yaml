@@ -1,21 +1,21 @@
 # train options
 seed: 2020 # sacred handles automatic seeding when passed in the config
-batch_size: 128
+batch_size: 256
 workers: 4
 epochs: 50
 dataset: "CIFAR10"
-model: "ResNet"  # "ResNet" or "ResNetGCN" or "ResNetGATCN"
-graph_type: "Empty" # "FC" or "K-MEAN" or "Empty" ("Empty" is for testing)
+model: "ResNetGCN"  # "ResNet" or "ResNetGCN" or "ResNetGATCN"
+graph_type: "K-MEAN"  # "FC" or "K-MEAN" or "Empty" ("Empty" is for testing)
 
 # loss options
 lr: 0.001
 momentum: 0.9
-weight_decay: 1.0e-4
+weight_decay: 5.0e-4
 
 # data folder
 root: "../data"
 # save model every checkpoint epochs
-checkpoint: 2
+checkpoint: 20
 # proportion of validation data
 valsize: 0.1
 

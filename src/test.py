@@ -14,7 +14,7 @@ def load_data(args):
             [transforms.ToTensor(),
              transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
         test_set = torchvision.datasets.CIFAR10(root=args.root, train=False,
-                                                 download=True, transform=transform)
+                                                download=True, transform=transform)
     else:
         raise NotImplementedError
 
@@ -32,14 +32,13 @@ def load_data(args):
 
 def load_model_bold(args):
     if args.model == "ResNet":
-        from model import ResNet
+        from models.model import ResNet
         model = ResNet()
     elif args.model == "ResNetGCN":
-        print(args.model)
-        from model import ResNetGCN
+        from models.model import ResNetGCN
         model = ResNetGCN(args.graph_type)
     elif args.model == "ResNetGATCN":
-        from model import ResNetGATCN
+        from models.model import ResNetGATCN
         model = ResNetGATCN(args.graph_type)
     else:
         raise NotImplementedError
