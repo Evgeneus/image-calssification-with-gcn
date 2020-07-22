@@ -62,6 +62,15 @@ class ContrastiveNet(nn.Module):
 
         return torch.stack(logits, dim=0)
 
+    # compute cosine similarity matrix for minibatch
+    def compute_similarity_matrix(self, x):
+        x = self.encoder(x)
+        x = self.projector(x)
+        sim = self._cosine_similarity(x)
+        sim_nonzero = torch.clamp(sim, 0)
+
+        return sim_nonzero
+
     def forward(self, x, targets):
         # make forward pass
         num_classes = targets.unique().size()[0]

@@ -1,7 +1,7 @@
 # train options
-seed: 2020 # sacred handles automatic seeding when passed in the config
+seed: 1234567 # sacred handles automatic seeding when passed in the config
 batch_size: 128
-workers: 0
+workers: 4
 epochs: 50
 dataset: "CIFAR10"
 model: "ContrastiveResNet"

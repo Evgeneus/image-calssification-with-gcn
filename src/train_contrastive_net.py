@@ -8,19 +8,12 @@ from experiment_setup import ex_contrastive
 from dataloader import load_data
 
 
-@torch.no_grad()
-def compute_val(model, val_loader, args):
-    model.eval()
-    val_loss = 0.
-    for _, data in enumerate(val_loader, 0):
-        # get the inputs; data is a list of [inputs, labels]
-        inputs, labels = data[0].to(args.device), data[1].to(args.device)
-        # forward
-        loss = model(inputs, labels)
-        val_loss += loss.item()
-    print("Val loss: {}".format(val_loss / len(val_loader)))
-
-    return val_loss / len(val_loader)
+def save_model(args, model, message):
+    out = args.out_dir + "checkpoint_{}.pth".format(message)
+    if isinstance(model, torch.nn.DataParallel):
+        torch.save(model.module.state_dict(), out)
+    else:
+        torch.save(model.state_dict(), out)
 
 
 def load_model(args):
@@ -34,11 +27,34 @@ def load_model(args):
     return model
 
 
+@torch.no_grad()
+def compute_val(model, val_loader, args):
+    model.eval()
+    val_loss = 0.
+    for _, data in enumerate(val_loader, 0):
+        # get the inputs; data is a list of [inputs, labels]
+        inputs, labels = data[0].to(args.device), data[1].to(args.device)
+        # forward
+        loss = model(inputs, labels)
+        val_loss += loss.item()
+    val_loss = val_loss / len(val_loader)
+    print("Val loss: {}".format(val_loss))
+    save_model(args, model, 'last')
+
+    if val_loss < args.best_val_loss:
+        print("Saving model...")
+        args.best_val_loss = val_loss
+        save_model(args, model, 'best')
+
+    return val_loss
+
+
 @ex_contrastive.automain
 def main(_run):
     args = argparse.Namespace(**_run.config)
 
     args.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    args.best_val_loss = float("inf")
 
     # Load data
     train_loader, val_loader = load_data(args)
@@ -84,7 +100,7 @@ def main(_run):
             # print statistics
             running_loss += loss.item()
             train_loss_epoch += loss.item()
-            k = 1
+            k = 20
             if i % k == 0:  # print every 20 mini-batches
                 print('[%d, %5d] loss: %.3f' %
                       (epoch, i + 1, running_loss / k))
