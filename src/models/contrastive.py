@@ -33,6 +33,7 @@ class ContrastiveNet(nn.Module):
             nn.Linear(embed_dim, args.projection_dim, bias=False),
         )
 
+        self.device = args.device
         self.num_neg = args.num_neg
         self.batch_size = args.batch_size
         self.temperature = args.temperature
@@ -79,7 +80,7 @@ class ContrastiveNet(nn.Module):
         x = self.projector(x)
 
         # one hot encoding buffer
-        y_onehot = torch.zeros(self.batch_size, num_classes)
+        y_onehot = torch.zeros(self.batch_size, num_classes).to(self.device)
         y_onehot.scatter_(1, targets.unsqueeze(1), 1)
 
         # compute similarity score (cosine sim)
