@@ -15,12 +15,12 @@ class Identity(nn.Module):
 
 
 class ContrastiveNet(nn.Module):
-    def __init__(self, batch_size, temperature, device, projection_dim, pretrained_encoder):
+    def __init__(self, args):
         super(ContrastiveNet, self).__init__()
         # load or create encoder
-        if pretrained_encoder is not None:
+        if args.pretrained_encoder is not None:
             self.encoder = ResNet18(output_layer=True)
-            self.encoder.load_state_dict(torch.load(pretrained_encoder, map_location=device))
+            self.encoder.load_state_dict(torch.load(args.pretrained_encoder, map_location=args.device))
             self.encoder.linear = Identity()
         else:
             self.encoder = ResNet18(output_layer=False)
@@ -30,13 +30,13 @@ class ContrastiveNet(nn.Module):
         self.projector = nn.Sequential(
             nn.Linear(embed_dim, embed_dim, bias=False),
             nn.ReLU(),
-            nn.Linear(embed_dim, projection_dim, bias=False),
+            nn.Linear(embed_dim, args.projection_dim, bias=False),
         )
 
-        self.num_neg = 10
-        self.batch_size = batch_size
-        self.temperature = temperature
-        self.device = device
+        self.num_neg = args.num_neg
+        self.batch_size = args.batch_size
+        self.temperature = args.temperature
+        self.device = args.device
         self.criterion = nn.CrossEntropyLoss(reduction="mean")
 
     def _cosine_similarity(self, x1, x2=None, eps=1e-8):

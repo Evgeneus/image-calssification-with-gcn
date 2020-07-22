@@ -4,35 +4,20 @@ import torch
 import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 
-
 from experiment_setup import ex_contrastive
 from dataloader import load_data
-from utils import save_model
 
 
-def compute_val(model, val_loader, criterion, args):
+@torch.no_grad()
+def compute_val(model, val_loader, args):
     model.eval()
     val_loss = 0.
-    correct = 0
-    total = 0
-    with torch.no_grad():
-        for _, data in enumerate(val_loader, 0):
-            # get the inputs; data is a list of [inputs, labels]
-            inputs, labels = data[0].to(args.device), data[1].to(args.device)
-
-            # forward
-            outputs = model(inputs)
-            loss = criterion(outputs, labels)
-
-            # print statistics
-            val_loss += loss.item()
-
-            _, predicted = outputs.max(1)
-            total += labels.size(0)
-            correct += predicted.eq(labels).sum().item()
-
-    acc = 100. * correct / total
-    print("Val acc: {}".format(acc))
+    for _, data in enumerate(val_loader, 0):
+        # get the inputs; data is a list of [inputs, labels]
+        inputs, labels = data[0].to(args.device), data[1].to(args.device)
+        # forward
+        loss = model(inputs, labels)
+        val_loss += loss.item()
     print("Val loss: {}".format(val_loss / len(val_loader)))
 
     return val_loss / len(val_loader)
@@ -41,9 +26,7 @@ def compute_val(model, val_loader, criterion, args):
 def load_model(args):
     if args.model == "ContrastiveResNet":
         from models.contrastive import ContrastiveNet
-        model = ContrastiveNet(args.batch_size, args.temperature,
-                               args.device, args.projection_dim,
-                               args.pretrained_encoder)
+        model = ContrastiveNet(args)
     else:
         raise NotImplementedError
     model = model.to(args.device)
@@ -62,7 +45,7 @@ def main(_run):
 
     # Define Network
     model = load_model(args)
-    # print(model)
+    print(model)
 
     # Define optimizer
     optimizer = optim.SGD(
@@ -94,7 +77,6 @@ def main(_run):
 
             # forward + backward + optimize
             loss = model(inputs, labels)
-            print("loss_contrast: {}".format(loss))
 
             loss.backward()
             optimizer.step()
@@ -102,7 +84,7 @@ def main(_run):
             # print statistics
             running_loss += loss.item()
             train_loss_epoch += loss.item()
-            k = 20
+            k = 1
             if i % k == 0:  # print every 20 mini-batches
                 print('[%d, %5d] loss: %.3f' %
                       (epoch, i + 1, running_loss / k))
@@ -111,19 +93,15 @@ def main(_run):
                 writer.add_scalar("Loss Steps/train", running_loss / k, step)
                 running_loss = 0.
 
-        # # Save model
-        # if epoch % args.checkpoint == 0:
-        #     save_model(args, model)
-        # # compute validation loss
-        # val_loss_epoch = compute_val(model, val_loader, criterion, args)
-        # _run.log_scalar("val.loss.epoch", val_loss_epoch)
-        # _run.log_scalar("train.loss.epoch", train_loss_epoch / steps_per_epoch)
-        # writer.add_scalar("Learning_rate", args.lr, epoch)
-        # writer.add_scalars("Loss vs Epoch", {"train_loss": train_loss_epoch / steps_per_epoch,
-        #                                      "val_loss": val_loss_epoch}, epoch)
-        #
-        # print("epoch: {}".format(epoch))
-        # print("val.loss.epoch", val_loss_epoch)
-        # print("train.loss.epoch", train_loss_epoch / steps_per_epoch)
+        # compute validation loss
+        val_loss_epoch = compute_val(model, val_loader, args)
+        _run.log_scalar("val.loss.epoch", val_loss_epoch)
+        _run.log_scalar("train.loss.epoch", train_loss_epoch / steps_per_epoch)
+        writer.add_scalar("Learning_rate", args.lr, epoch)
+        writer.add_scalars("Loss vs Epoch", {"train_loss": train_loss_epoch / steps_per_epoch,
+                                             "val_loss": val_loss_epoch}, epoch)
+        print("epoch: {}".format(epoch))
+        print("val.loss.epoch", val_loss_epoch)
+        print("train.loss.epoch", train_loss_epoch / steps_per_epoch)
 
     print('Finished Training')

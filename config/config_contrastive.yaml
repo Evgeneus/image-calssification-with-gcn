@@ -8,6 +8,7 @@ model: "ContrastiveResNet"
 pretrained_encoder: "../pretrained_models/resnet18_supervised.pth"  # or null  or "../pretrained_models/resnet18_supervised.pth"
 temperature: 0.5
 projection_dim: 128
+num_neg: 10
 
 # loss options
 lr: 0.1
