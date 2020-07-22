@@ -44,3 +44,25 @@ def load_data(args):
     )
 
     return train_loader, val_loader
+
+
+def load_data_test(args):
+    if args.dataset == "CIFAR10":
+        transform = transforms.Compose(
+            [transforms.ToTensor(),
+             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))])
+        test_set = torchvision.datasets.CIFAR10(root=args.root, train=False,
+                                                download=True, transform=transform)
+    else:
+        raise NotImplementedError
+
+    test_loader = torch.utils.data.DataLoader(
+        test_set,
+        batch_size=args.batch_size,
+        shuffle=True,
+        drop_last=False,
+        num_workers=args.workers,
+        sampler=None,
+    )
+
+    return test_loader

@@ -20,4 +20,6 @@ root: "../data"
 # proportion of validation data
 valsize: 0.1
 
-
+# evaluation arguments
+test_model: "../pretrained_models/contrastive_nneg10.pth"
+n_neighbors: 3
