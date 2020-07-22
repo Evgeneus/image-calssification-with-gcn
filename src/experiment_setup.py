@@ -7,16 +7,16 @@ from sacred.observers import FileStorageObserver
 import torch
 
 
-ex = Experiment("Cls")
+ex = Experiment("Classification")
 
 
 @ex.config
 def config():
-    config_file = "../config/config.yaml"
+    config_file = "../config/config_supervised.yaml"
     ex.add_config(config_file)
 
     # file output directory
-    ex.observers.append(FileStorageObserver("../logs/clf"))
+    ex.observers.append(FileStorageObserver("../logs/classification"))
 
     ex.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     ex.n_gpu = torch.cuda.device_count()
