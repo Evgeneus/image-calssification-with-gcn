@@ -4,7 +4,7 @@ batch_size: 128
 workers: 0
 epochs: 50
 dataset: "CIFAR10"
-model: "ContrastiveResNetGCN"  # "ResNet" or "ResNetGCN" or "ResNetGATCN" or "ContrastiveResNetGCN"
+model: "ContrastiveResNet"  # "ResNet" or "ResNetGCN" or "ResNetGATCN" or "ContrastiveResNetGCN"
 graph_type: "FC"  # "FC" or "K-MEAN" or "Empty" ("Empty" is for testing)
 temperature: 0.5
 projection_dim: 128

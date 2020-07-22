@@ -1,0 +1,22 @@
+# train options
+seed: 2020 # sacred handles automatic seeding when passed in the config
+batch_size: 128
+workers: 0
+epochs: 50
+dataset: "CIFAR10"
+model: "ContrastiveResNet"
+pretrained_encoder: "../pretrained_models/resnet18_supervised.pth"  # or null  or "../pretrained_models/resnet18_supervised.pth"
+temperature: 0.5
+projection_dim: 128
+
+# loss options
+lr: 0.1
+momentum: 0.9
+weight_decay: 5.0e-4
+
+# data folder
+root: "../data"
+# proportion of validation data
+valsize: 0.1
+
+
