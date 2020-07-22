@@ -107,7 +107,15 @@ class WGraphConv(nn.Module):
         return {'h': torch.sum(nodes.mailbox['msg'], dim=1)}
 
     def forward(self, graph, feat):
+
         graph = graph.local_var()
+
+        # compute norm
+        degs = graph.out_degrees().to(feat.device).float().clamp(min=1)
+        norm = torch.pow(degs, -0.5)
+        shp = norm.shape + (1,) * (feat.dim() - 1)
+        norm = torch.reshape(norm, shp)
+        feat = feat * norm
 
         graph.ndata['h'] = feat
         graph.update_all(self._gcn_message, self._gcn_reduce)
@@ -115,6 +123,12 @@ class WGraphConv(nn.Module):
 
         weight = self.weight
         rst = torch.matmul(rst, weight)
+
+        degs = graph.in_degrees().to(feat.device).float().clamp(min=1)
+        norm = torch.pow(degs, -0.5)
+        shp = norm.shape + (1,) * (feat.dim() - 1)
+        norm = torch.reshape(norm, shp)
+        rst = rst * norm
 
         if self.bias is not None:
             rst = rst + self.bias
