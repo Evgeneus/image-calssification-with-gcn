@@ -6,7 +6,7 @@ import torch.optim as optim
 from torch.utils.tensorboard import SummaryWriter
 
 from experiment_setup import ex
-from dataloader import load_data
+from dataloader import load_data, load_data_test
 from utils import save_model, CrossEntropyLossSoft
 
 
@@ -47,6 +47,32 @@ def compute_val(model, val_loader, args):
     return val_loss / len(val_loader)
 
 
+def compute_test(model, val_loader, args):
+    model.eval()
+    criterion = nn.CrossEntropyLoss()
+    val_loss = 0.
+    correct = 0
+    total = 0
+    with torch.no_grad():
+        for _, data in enumerate(val_loader, 0):
+            # get the inputs; data is a list of [inputs, labels]
+            inputs, labels = data[0].to(args.device), data[1].to(args.device)
+
+            # forward
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+
+            # print statistics
+            val_loss += loss.item()
+
+            _, predicted = outputs.max(1)
+            total += labels.size(0)
+            correct += predicted.eq(labels).sum().item()
+
+    acc = 100. * correct / total
+    print("Test acc: {}".format(acc))
+
+
 def load_model(args):
     if args.model == "ResNet":
         from models.resnet import ResNet18
@@ -70,6 +96,7 @@ def main(_run):
 
     # Load data
     train_loader, val_loader = load_data(args)
+    test_loader = load_data_test(args)
 
     # Define Network
     model = load_model(args)
@@ -122,7 +149,7 @@ def main(_run):
             running_loss += loss.item()
             train_loss_epoch += loss.item()
 
-            k = 20
+            k = 10
             if i % k == 0:  # print every k mini-batches
                 print('[%d, %5d] loss: %.3f' %
                       (epoch, i + 1, running_loss / k))
@@ -136,6 +163,7 @@ def main(_run):
             save_model(args, model)
         # compute validation loss
         val_loss_epoch = compute_val(model, val_loader, args)
+        compute_test(model, test_loader, args)
         _run.log_scalar("val.loss.epoch", val_loss_epoch)
         _run.log_scalar("train.loss.epoch", train_loss_epoch / steps_per_epoch)
         writer.add_scalar("Learning_rate", args.lr, epoch)

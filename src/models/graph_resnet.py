@@ -55,7 +55,7 @@ class GraphResNet(nn.Module):
         g = dgl.DGLGraph()
         g.add_nodes(num_vert)
         for i in range(num_vert):
-            j_nodes = np.argpartition(weights[i].cpu().numpy(), -self.n)[-self.n:]
+            _, j_nodes = torch.topk(weights[i], self.n, sorted=False)
             for j in j_nodes:
                 g.add_edge(i, j, {'weight': weights[i][j].unsqueeze(0).unsqueeze(1)})
 
@@ -73,7 +73,7 @@ class GraphResNet(nn.Module):
         labels_soft = []
         for t_node in range(num_vert):
             # compute soft labels
-            sim_source_nodes, source_nodes = torch.topk(weights[t_node], self.n)
+            sim_source_nodes, source_nodes = torch.topk(weights[t_node], self.n, sorted=False)
             labels_source_nodes = labels_hard[source_nodes]
             soft = torch.zeros(10)
             norm = sim_source_nodes.sum().item()
