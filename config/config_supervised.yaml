@@ -10,7 +10,7 @@ pretrained_encoder_gnn: "../pretrained_models/resnet18_supervised.pth"  # or nul
 
 
 # loss options
-lr: 0.001
+lr: 0.1
 momentum: 0.9
 weight_decay: 5.0e-4
 
