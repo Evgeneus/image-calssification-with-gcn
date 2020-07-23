@@ -27,8 +27,8 @@ class GraphResNet(nn.Module):
             self.encoder = ResNet18(output_layer=True)
             self.encoder.load_state_dict(torch.load(args.pretrained_encoder_gnn, map_location=args.device))
             self.encoder.linear = Identity()
-            for params in self.encoder.parameters():
-                params.requires_grad = False
+            # for params in self.encoder.parameters():
+            #     params.requires_grad = False
         else:
             self.encoder = ResNet18(output_layer=False)
         embed_dim = 512  # output from ResNet18
@@ -37,8 +37,8 @@ class GraphResNet(nn.Module):
         if args.pretrained_contrastive_model is not None:
             self.CoNet = ContrastiveNet(args)
             self.CoNet.load_state_dict(torch.load(args.pretrained_contrastive_model, map_location=args.device))
-            for params in self.CoNet.parameters():
-                params.requires_grad = False
+            # for params in self.CoNet.parameters():
+            #     params.requires_grad = False
         else:
             raise NotImplementedError("only support pretrained contrastive_model")
 
@@ -46,7 +46,7 @@ class GraphResNet(nn.Module):
         self.n = 10  # number of most similar nodes to consider for sending graph message
         self.graph_conv = WGraphConv(embed_dim, self.num_classes, bias=True)
 
-    @torch.no_grad()
+    # @torch.no_grad()
     def _get_grpah(self, x):
         # compute similarity scores, i e weights
         weights = self.CoNet.compute_similarity_matrix(x)
@@ -62,7 +62,7 @@ class GraphResNet(nn.Module):
         return g
 
 
-    @torch.no_grad()
+    # @torch.no_grad()
     def _get_grpah_softlabels(self, x, labels_hard):
         # compute similarity scores, i e weights
         weights = self.CoNet.compute_similarity_matrix(x)
@@ -73,9 +73,8 @@ class GraphResNet(nn.Module):
         labels_soft = []
         for t_node in range(num_vert):
             # compute soft labels
-            source_nodes = np.argpartition(weights[t_node].cpu().numpy(), -self.n)[-self.n:]
+            sim_source_nodes, source_nodes = torch.topk(weights[t_node], self.n)
             labels_source_nodes = labels_hard[source_nodes]
-            sim_source_nodes = weights[t_node][source_nodes]
             soft = torch.zeros(10)
             norm = sim_source_nodes.sum().item()
             for l, sim in zip(labels_source_nodes, sim_source_nodes):
