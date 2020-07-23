@@ -9,6 +9,7 @@ from experiment_setup import ex
 from dataloader import load_data
 from utils import save_model
 
+import time
 
 def compute_val(model, val_loader, criterion, args):
     model.eval()
@@ -97,6 +98,7 @@ def main(_run):
 
             # forward + backward + optimize
             outputs = model(inputs)
+
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
@@ -104,8 +106,9 @@ def main(_run):
             # print statistics
             running_loss += loss.item()
             train_loss_epoch += loss.item()
+
             k = 20
-            if i % k == 0:  # print every 20 mini-batches
+            if i % k == 0:  # print every k mini-batches
                 print('[%d, %5d] loss: %.3f' %
                       (epoch, i + 1, running_loss / k))
                 step = epoch * steps_per_epoch + i + 1

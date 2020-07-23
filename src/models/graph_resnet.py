@@ -4,7 +4,7 @@ import dgl
 import numpy as np
 
 from models.resnet import ResNet18
-from models.graph_conv import GraphConv, WGraphConv
+from models.graph_conv import WGraphConv
 from models.contrastive import ContrastiveNet
 
 
@@ -21,7 +21,7 @@ class GraphResNet(nn.Module):
 
     def __init__(self, args):
         super(GraphResNet, self).__init__()
-
+        self.args = args
         # load or create encoder for initial features of nodes
         if args.pretrained_encoder_gnn is not None:
             self.encoder = ResNet18(output_layer=True)
@@ -43,6 +43,7 @@ class GraphResNet(nn.Module):
             raise NotImplementedError("only support pretrained contrastive_model")
 
         self.num_classes = 10
+        self.n = 10  # number of most similar nodes to consider for sending graph message
         self.graph_conv = WGraphConv(embed_dim, self.num_classes, bias=True)
 
     @torch.no_grad()
@@ -54,7 +55,8 @@ class GraphResNet(nn.Module):
         g = dgl.DGLGraph()
         g.add_nodes(num_vert)
         for i in range(num_vert):
-            for j in range(num_vert):
+            j_nodes = np.argpartition(weights[i].numpy(), -self.n)[-self.n:]
+            for j in j_nodes:
                 g.add_edge(i, j, {'weight': weights[i][j].unsqueeze(0).unsqueeze(1)})
 
         return g
@@ -68,11 +70,10 @@ class GraphResNet(nn.Module):
         num_vert = x.shape[0]
         g = dgl.DGLGraph()
         g.add_nodes(num_vert)
-        n = 10
         labels_soft = []
         for t_node in range(num_vert):
             # compute soft labels
-            source_nodes = np.argpartition(weights[t_node].numpy(), -n)[-n:]
+            source_nodes = np.argpartition(weights[t_node].numpy(), -self.n)[-self.n:]
             labels_source_nodes = labels_hard[source_nodes]
             sim_source_nodes = weights[t_node][source_nodes]
             soft = torch.zeros(10)
@@ -87,6 +88,7 @@ class GraphResNet(nn.Module):
                 g.add_edge(s_node, t_node, {'weight': w})
 
         labels_soft = torch.stack(labels_soft, dim=0)
+        g.to(self.args.device)
         return g, labels_soft
 
     def forward(self, x, labels_hard=None):

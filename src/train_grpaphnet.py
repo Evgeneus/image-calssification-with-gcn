@@ -44,7 +44,7 @@ def load_model(args):
         from models.resnet import ResNet18
         model = ResNet18(output_layer=True, num_classes=10)
     elif args.model == "GraphResNet":
-        from models.model import GraphResNet
+        from models.graph_resnet import GraphResNet
         model = GraphResNet(args)
     else:
         raise NotImplementedError
@@ -58,7 +58,7 @@ def load_model(args):
 def main(_run):
     args = argparse.Namespace(**_run.config)
 
-    args.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    args.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Load data
     train_loader, val_loader = load_data(args)
@@ -109,7 +109,7 @@ def main(_run):
             running_loss += loss.item()
             train_loss_epoch += loss.item()
 
-            k = 2
+            k = 20
             if i % k == 0:  # print every k mini-batches
                 print('[%d, %5d] loss: %.3f' %
                       (epoch, i + 1, running_loss / k))
