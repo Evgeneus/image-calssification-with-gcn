@@ -6,9 +6,9 @@ def save_model(args, model, msg):
     # To save a DataParallel model generically, save the model.module.state_dict().
     # This way, you have the flexibility to load the model any way you want to any device you want.
     if msg:
-        out = "../logs/classification/{}/pretrained/model_{}.tar".format(args.experiment_id, msg)
+        out = args.out_dir + "model_{}.tar".format(msg)
     else:
-        out = "../logs/classification/{}/pretrained/checkpoint_{}.tar".format(args.experiment_id, args.current_epoch)
+        out = args.out_dir + ".pretrained/checkpoint_{}.tar".format(args.current_epoch)
     if isinstance(model, torch.nn.DataParallel):
         torch.save(model.module.state_dict(), out)
     else:
