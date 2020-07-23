@@ -5,6 +5,7 @@ workers: 4
 epochs: 50
 dataset: "CIFAR10"
 model: "GraphResNet"  # "ResNet" or "GraphResNet"
+pretrained_encoder_gnn: "../pretrained_models/resnet18_supervised.pth"  # or null  or "../pretrained_models/resnet18_supervised.pth"
 #graph_type: "FC"  # "FC" or "K-MEAN" or "Empty" ("Empty" is for testing)
 
 
@@ -18,12 +19,10 @@ weight_decay: 5.0e-4
 temperature: 0.5  # not used
 projection_dim: 128
 num_neg: 10  # not used
-pretrained_encoder: "../pretrained_models/resnet18_supervised.pth"  # or null  or "../pretrained_models/resnet18_supervised.pth"
+pretrained_encoder_contrastive: null
 pretrained_contrastive_model: "../pretrained_models/contrastive_nneg10.pth"  # or null
 
 
 root: "../data" # data folder
 checkpoint: 30  # save model every checkpoint epochs
 valsize: 0.1  # proportion of validation data
-
-

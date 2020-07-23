@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 
 
 def save_model(args, model):
@@ -16,3 +17,17 @@ def load_model(args, model):
     model.load_state_dict(torch.load(model_path))
 
     return model
+
+
+class CrossEntropyLossSoft(nn.Module):
+
+    def __init__(self, weight=None):
+        super(CrossEntropyLossSoft, self).__init__()
+        self.weight = weight
+
+    def forward(self, pred, soft_targets):
+        logsoftmax = nn.LogSoftmax()
+        if self.weight is not None:
+            return torch.mean(torch.sum(- soft_targets * self.weight * logsoftmax(pred), 1))
+        else:
+            return torch.mean(torch.sum(- soft_targets * logsoftmax(pred), 1))

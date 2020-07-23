@@ -18,9 +18,9 @@ class ContrastiveNet(nn.Module):
     def __init__(self, args):
         super(ContrastiveNet, self).__init__()
         # load or create encoder
-        if args.pretrained_encoder is not None:
+        if args.pretrained_encoder_contrastive is not None:
             self.encoder = ResNet18(output_layer=True)
-            self.encoder.load_state_dict(torch.load(args.pretrained_encoder, map_location=args.device))
+            self.encoder.load_state_dict(torch.load(args.pretrained_encoder_contrastive, map_location=args.device))
             self.encoder.linear = Identity()
         else:
             self.encoder = ResNet18(output_layer=False)

@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import dgl
+import numpy as np
 
 from models.resnet import ResNet18
 from models.graph_conv import GraphConv, WGraphConv
@@ -21,15 +22,18 @@ class GraphResNet(nn.Module):
     def __init__(self, args):
         super(GraphResNet, self).__init__()
 
-        # load or create encoder
-        if args.pretrained_encoder is not None:
+        # load or create encoder for initial features of nodes
+        if args.pretrained_encoder_gnn is not None:
             self.encoder = ResNet18(output_layer=True)
-            self.encoder.load_state_dict(torch.load(args.pretrained_encoder, map_location=args.device))
+            self.encoder.load_state_dict(torch.load(args.pretrained_encoder_gnn, map_location=args.device))
             self.encoder.linear = Identity()
+            for params in self.encoder.parameters():
+                params.requires_grad = False
         else:
             self.encoder = ResNet18(output_layer=False)
         embed_dim = 512  # output from ResNet18
 
+        # load pretrained contrastive model for computing similarity scores
         if args.pretrained_contrastive_model is not None:
             self.CoNet = ContrastiveNet(args)
             self.CoNet.load_state_dict(torch.load(args.pretrained_contrastive_model, map_location=args.device))
@@ -38,7 +42,8 @@ class GraphResNet(nn.Module):
         else:
             raise NotImplementedError("only support pretrained contrastive_model")
 
-        self.graph_conv = WGraphConv(embed_dim, 10, bias=True)
+        self.num_classes = 10
+        self.graph_conv = WGraphConv(embed_dim, self.num_classes, bias=True)
 
     @torch.no_grad()
     def _get_grpah(self, x):
@@ -54,15 +59,48 @@ class GraphResNet(nn.Module):
 
         return g
 
-    def forward(self, x):
+
+    @torch.no_grad()
+    def _get_grpah_softlabels(self, x, labels_hard):
+        # compute similarity scores, i e weights
+        weights = self.CoNet.compute_similarity_matrix(x)
+        # create densely connected weighted graph
+        num_vert = x.shape[0]
+        g = dgl.DGLGraph()
+        g.add_nodes(num_vert)
+        n = 10
+        labels_soft = []
+        for t_node in range(num_vert):
+            # compute soft labels
+            source_nodes = np.argpartition(weights[t_node].numpy(), -n)[-n:]
+            labels_source_nodes = labels_hard[source_nodes]
+            sim_source_nodes = weights[t_node][source_nodes]
+            soft = torch.zeros(10)
+            norm = sim_source_nodes.sum().item()
+            for l, sim in zip(labels_source_nodes, sim_source_nodes):
+                soft[l] += sim
+            soft /= norm
+            labels_soft.append(soft)
+            # create weighted edges for graph
+            for s_node in source_nodes:
+                w = weights[t_node][s_node].unsqueeze(0).unsqueeze(1)
+                g.add_edge(s_node, t_node, {'weight': w})
+
+        labels_soft = torch.stack(labels_soft, dim=0)
+        return g, labels_soft
+
+    def forward(self, x, labels_hard=None):
         # make forward pass
         x1 = self.encoder(x)
-        # create graph
-        g = self._get_grpah(x)
-        # run graph conv with weighted graph
+        # create graph/soft labels
+        if labels_hard is None:
+            g = self._get_grpah(x)
+        else:
+            g, labels_soft = self._get_grpah_softlabels(x, labels_hard)
+        # run graph convolution
         out = self.graph_conv(g, x1)
 
-        return out
+        return out if labels_hard is None else out, labels_soft
 
 
 # from models.helper import GraphCreator
