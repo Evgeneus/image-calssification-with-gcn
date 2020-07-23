@@ -1,5 +1,6 @@
 import argparse
 import torch
+import torch.nn.functional as F
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 
@@ -42,7 +43,9 @@ def main(_run):
         print("{}/{}".format(i, len(train_loader)))
         # get the inputs; data is a list of [inputs, labels]
         inputs, labels = data_train[0].to(args.device), data_train[1].to(args.device)
-        embed = model.projector(model.encoder(inputs)).cpu().tolist()
+        embed = model.projector(model.encoder(inputs)).cpu()
+        # l2 normalization to use cosine dist as equivalent to l2 dist in KNN
+        embed = F.normalize(embed, dim=1, p=2).tolist()
         train_embeddings += embed
         train_labels += labels.cpu().tolist()
     print("Done!")
@@ -54,8 +57,9 @@ def main(_run):
     for i, data_test in enumerate(test_loader, 0):
         print("{}/{}".format(i, len(test_loader)))
         # get the inputs; data is a list of [inputs, labels]
-        inputs, labels = data_test[0].to(args.device), data_test[1].to(args.device)
-        embed = model.projector(model.encoder(inputs)).cpu().tolist()
+        embed = model.projector(model.encoder(inputs)).cpu()
+        # l2 normalization to use cosine dist as equivalent to l2 dist in KNN
+        embed = F.normalize(embed, dim=1, p=2).tolist()
         test_embeddings += embed
         test_labels += labels.cpu().tolist()
     print("Done!")
