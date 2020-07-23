@@ -10,7 +10,11 @@ from dataloader import load_data
 from utils import save_model, CrossEntropyLossSoft
 
 
+best_val_acc = 0.
+
+
 def compute_val(model, val_loader, args):
+    global best_val_acc
     model.eval()
     criterion = nn.CrossEntropyLoss()
     val_loss = 0.
@@ -34,7 +38,11 @@ def compute_val(model, val_loader, args):
 
     acc = 100. * correct / total
     print("Val acc: {}".format(acc))
-    print("Val loss: {}".format(val_loss / len(val_loader)))
+
+    if acc > best_val_acc:
+        print("Saving model...")
+        best_val_acc = acc
+        save_model(args, model, 'best')
 
     return val_loss / len(val_loader)
 
@@ -65,6 +73,11 @@ def main(_run):
 
     # Define Network
     model = load_model(args)
+    if args.device.type == "cuda":
+        model = model.to(args.device)
+        import torch.backends.cudnn as cudnn
+        model = torch.nn.DataParallel(model)
+        cudnn.benchmark = True
 
     # Define a Loss function and optimizer
     criterion = CrossEntropyLossSoft()
@@ -97,9 +110,9 @@ def main(_run):
             optimizer.zero_grad()
 
             # forward + backward + optimize
-            outputs, labels_hard = model(inputs, labels)
+            outputs, labels_soft = model(inputs, labels)
 
-            loss = criterion(outputs, labels_hard)
+            loss = criterion(outputs, labels_soft)
 
             loss.backward()
 

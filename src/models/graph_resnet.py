@@ -55,7 +55,7 @@ class GraphResNet(nn.Module):
         g = dgl.DGLGraph()
         g.add_nodes(num_vert)
         for i in range(num_vert):
-            j_nodes = np.argpartition(weights[i].numpy(), -self.n)[-self.n:]
+            j_nodes = np.argpartition(weights[i].cpu().numpy(), -self.n)[-self.n:]
             for j in j_nodes:
                 g.add_edge(i, j, {'weight': weights[i][j].unsqueeze(0).unsqueeze(1)})
 
@@ -73,7 +73,7 @@ class GraphResNet(nn.Module):
         labels_soft = []
         for t_node in range(num_vert):
             # compute soft labels
-            source_nodes = np.argpartition(weights[t_node].numpy(), -self.n)[-self.n:]
+            source_nodes = np.argpartition(weights[t_node].cpu().numpy(), -self.n)[-self.n:]
             labels_source_nodes = labels_hard[source_nodes]
             sim_source_nodes = weights[t_node][source_nodes]
             soft = torch.zeros(10)
@@ -87,7 +87,7 @@ class GraphResNet(nn.Module):
                 w = weights[t_node][s_node].unsqueeze(0).unsqueeze(1)
                 g.add_edge(s_node, t_node, {'weight': w})
 
-        labels_soft = torch.stack(labels_soft, dim=0)
+        labels_soft = torch.stack(labels_soft, dim=0).long().to(self.args.device)
         g.to(self.args.device)
         return g, labels_soft
 
@@ -102,8 +102,10 @@ class GraphResNet(nn.Module):
         # run graph convolution
         out = self.graph_conv(g, x1)
 
-        return out if labels_hard is None else out, labels_soft
-
+        if labels_hard is None:
+            return out
+        else:
+            return out, labels_soft
 
 # from models.helper import GraphCreator
 # from dgl.nn.pytorch import GATConv
